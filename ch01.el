@@ -61,19 +61,29 @@ cc(11, 0), cc(10, 1), cc(6, 1), cc(1, 2), cc(1, 1), cc(-4, 2), 1
       angle
     (p (sine (/ angle 3.0)))))
 
-(defvar *counter*)
-
-(defadvice sine (before before-counter) 'activate
-  (setq *counter* (+ *counter* 1)))
-
+;; FIXME: remove the global var, unadvice the advice
 (defvar *count* 0)
 
 (defmacro counter (func &rest args)
   `(progn
-     (defadvice ,func (before foobarnew2) 'activate
-       (setq *count* (+ *count* 1)))
+     (defadvice ,func (before foobar) 'activate
+       (setq *count* (+ *count* 1))
+       (message "[DEBUG] count %d" *count*))
      (setq *count* 0)
      (,func ,@args)
      *count*))
 
-(counter sine 1215)
+(ad-deactivate 'sine)
+(ad-activate 'sine)
+(ad-disable-advice 'sine 'before 'foo)
+(ad-disable-advice 'sine 'before 'foobarnew2)
+(ad-get-enabled-advices 'sine 'before)
+(macroexpand '(counter sine 12.15))
+(counter sine 12.15)
+
+(mapcar (lambda (x) (counter sine x)) '(1 3 9 27 81 243))
+
+;; a. 6
+;; b. space: log3(a) number of steps: log3(a)
+
+
