@@ -1,0 +1,489 @@
+
+;; ex 2.1
+(define (mk-rat n d)
+  (if (< d 0)
+      (cons (- n) (- d))
+      (cons n d)))
+
+(mk-rat -2 -3)
+
+;; ex 2.2
+
+(define (make-segment p1 p2)
+  (cons p1 p2))
+
+(define (start-segment seg)
+  (car seg))
+
+(define (end-segment seg)
+  (cdr seg))
+
+(define (make-point x y)
+  (cons x y))
+
+(define (x-point p)
+  (car p))
+
+(define (y-point p)
+  (cdr p))
+
+(define (print-point p)
+  (newline)
+  (display "(")
+  (display (x-point p))
+  (display ",")
+  (display (y-point p))
+  (display ")"))
+
+
+(define (midpoint-segment seg)
+  (let ((start (start-segment seg))
+        (end (end-segment seg)))
+    (let ((x1 (x-point start))
+          (y1 (y-point start))
+          (x2 (x-point end))
+          (y2 (y-point end)))
+      (make-point (/ (+ x1 x2) 2.0) (/ (+ y1 y2) 2.0)))))
+
+(define p1 (make-point 2 3))
+(define p2 (make-point 4 5))
+(define seg (make-segment p1 p2))
+
+(print-point (midpoint-segment seg))
+
+
+
+;; ex 2.3
+
+(define (distance p1 p2)
+  (let ((x1 (x-point p1))
+        (y1 (y-point p1))
+        (x2 (x-point p2))
+        (y2 (y-point p2)))
+    (sqrt (+ (* (- x2 x1) (- x2 x1))
+             (* (- y2 y1) (- y2 y1))))))
+
+(define (length seg)
+  (let ((start (start-segment seg))
+        (end (end-segment seg)))
+    (distance start end)))
+
+(define (make-rectangular seg1 seg2)
+  (cons seg1 seg2))
+
+(define (get-height rect)
+  (length (car rect)))
+
+(define (get-width rect)
+  (length (cdr rect)))
+
+(define rect (make-rectangular seg seg))
+(define (rect-perimeter rect)
+  (let ((height (get-height rect))
+        (width (get-width rect)))
+    (* 2 (+ height width))))
+
+(define (rect-area rect)
+  (let ((height (get-height rect))
+        (width (get-width rect)))
+    (* height width)))
+
+(define (rect-helper rect func)
+  (let ((height (get-height rect))
+        (width (get-width rect)))
+    (func height width)))
+
+(rect-helper rect (lambda (height width)
+                    (* 2 (+ height width))))
+
+;; ex 2.4
+
+(define (cdr z)
+  (z (lambda (p q) q)))
+
+;; ex 2.5
+
+(define (my-cons a b)
+  (* (expt 2 a) (expt 3 b)))
+
+(define (get-power n a)
+  (define (get-power-iter n a curr)
+    (display curr)
+    (if (= (remainder n a) 0)
+        (get-power-iter (/ n a) a (+ curr 1))
+        curr))
+  (get-power-iter n a 0))
+
+(get-power 12 2)
+
+(define (my-car z)
+  (get-power z 2))
+
+(define (my-cdr z)
+  (get-power z 3))
+
+(my-car (my-cons 3 4))
+
+;; ex 2.7
+
+(define (make-interval a b)
+  (cons a b))
+
+(define (lower-bound interval)
+  (car interval))
+
+(define (upper-bound interval)
+  (cdr interval))
+
+;; ex 2.8
+
+(define (sub-interval i1 i2)
+  (make-interval
+   (- (lower-bound i1) (upper-bound i2))
+   (- (upper-bound i1) (lower-bound i2))))
+
+;; ex 2.9
+
+;; for sum, w3 = w1 + w2
+;; for sub, w3 = w1 + w2
+
+;; for mul, (i, i + 2), (i, i + 2), i > 0, width is 1
+;; (i, i + 2) * (i, i + 2) = (i*i, (i+2)*(i+2)), width is 2 * i + 2, not fixed.
+
+;; ex 2.12
+
+(define (make-center-percent center percent)
+  (make-interval (* center (- 1 percent))
+                 (* center (+ 1 percent)))))
+
+;; ex 2.13
+
+;; mul (c1*c2*(1-p1)*(1-p2),c1*c2*(1+p1)(1+p2)) = c1*c2,(1 - p1 - p2 + p1 * p2, 1 + p1 + p2 + p1 * p2), if p1,p2 are small enough, the percent can approximate to be p1 + p2.
+
+;; ex 2.17
+
+(define (last-pair l)
+  (if (null? (cdr l))
+      (car l)
+      (last-pair (cdr l))))
+
+(last-pair '(1 2 3 4))
+
+;; ex 2.18
+(define (reverse l)
+  (define (reverse-iter l acc)
+    (if (null? l)
+        acc
+        (reverse-iter (cdr l) (cons (car l) acc))))
+  (reverse-iter l '()))
+
+(reverse '(1 23 4 5))
+
+;; ex 2.19
+(define (first-denomination l)
+  (car l))
+
+(define (except-first-denomination l)
+  (cdr l))
+
+(define (no-more? l)
+  (null? l))
+
+(define (cc amount coin-values)
+  (cond ((= amount 0) 1)
+        ((or (< amount 0) (no-more? coin-values)) 0)
+        (else
+         (+ (cc amount
+                (except-first-denomination coin-values))
+            (cc (- amount
+                   (first-denomination coin-values))
+                coin-values)))))
+
+(define us-coins (list 50 25 10 5 1))
+(define uk-coins (list 100 50 20 10 5 2 1 0.5))
+
+(cc 100 (reverse us-coins))
+
+;; ex 2.20
+
+(define (same-parity first . l)
+  (define (same-parity-iter l first acc)
+    (if (null? l)
+        acc
+        (if (= (remainder (- (car l) first) 2) 0)
+            (same-parity-iter (cdr l) first (append acc (list (car l))))
+            (same-parity-iter (cdr l) first acc))))
+  (same-parity-iter l first (list first)))
+
+
+(same-parity 1 2 3 4 7 8)
+(same-parity 1 2 3)
+
+;; ex 2.21
+
+(define (square-list items)
+  (if (null? items)
+      '()
+      (cons (* (car items) (car items)) (square-list (cdr items)))))
+
+(define (square-list items)
+  (map (lambda (x) (* x x)) items))
+
+(square-list '(1 2))
+
+;; ex 2.22
+;; the cons order
+
+;; ex 2.23
+
+(define (for-each proc items)
+  (cond ((not (null? items))
+         (proc (car items))
+         (for-each proc (cdr items)))))
+
+(for-each (lambda (x) (* x x)) '(1 2 3))
+
+;; ex 2.24
+
+(list 1 (list 2 (list 3 4)))
+
+;; ex 2.25
+
+(define l '(1 3 (5 7) 9))
+
+(car (cdr (car (cdr (cdr l)))))
+
+(define l '((7)))
+(car (car l))
+
+(define l '(1 (2 (3 (4 (5 (6 7)))))))
+
+(car (cdr (car (cdr (car (cdr (car (cdr (car (cdr (car (cdr l))))))))))))
+
+;; ex 2.26
+(define x (list 1 2 3))
+(define y (list 4 5 6))
+
+(append x y)
+
+(cons x y)
+(list x y)
+
+
+;; ex 2.27
+(define (reverse l)
+  (define (reverse-iter l acc)
+    (if (null? l)
+        acc
+        (reverse-iter (cdr l) (cons (car l) acc))))
+  (reverse-iter l '()))
+
+(define (deep-reverse l)
+  (define (deep-reverse-iter l acc)
+    (cond ((null? l) acc)
+           ((pair? (car l)) (deep-reverse-iter (cdr l) (cons (deep-reverse-iter (car l) '()) acc)))
+           (else (deep-reverse-iter (cdr l) (cons (car l) acc)))))
+  (deep-reverse-iter l '()))
+
+(define x '((1 2) (3 4)))
+(deep-reverse x)
+
+;; ex 2.28
+
+(define (fringe l)
+  (cond ((null? l) '())
+        ((pair? (car l)) (append (fringe (car l)) (fringe (cdr l))))
+        (else (cons (car l) (fringe (cdr l))))))
+
+(fringe (list x x))
+
+;; ex 2.30
+
+(define (square-tree tree)
+  (cond ((null? tree) '())
+        ((not (pair? (car tree))) (cons (* (car tree) (car tree)) (square-tree (cdr tree))))
+        (else (cons (square-tree (car tree)) (square-tree (cdr tree))))))
+
+(square-tree '((1 3) (2 4) 5 (3 (6 8))))
+
+(define (square-tree tree)
+  (map (lambda (sub-tree)
+         (if (pair? sub-tree)
+             (square-tree sub-tree)
+             (* sub-tree sub-tree))) tree))
+
+
+;; ex 2.31
+
+(define (tree-map proc tree)
+  (map (lambda (sub-tree)
+         (if (pair? sub-tree)
+             (square-tree sub-tree)
+             (proc sub-tree))) tree))
+
+(tree-map (lambda (x) (* x x)) '((1 3) (2 4) 5 (3 (6 8))))
+
+;; ex 2.32
+(define (subsets s)
+  (if (null? s)
+      '(())
+      (let ((rest (subsets (cdr s))))
+        (append rest (map (lambda (x)
+                            (cons (car s) x)) rest)))))
+
+;; ex 2.33
+
+(define (accumulate op initial sequence)
+  (if (null? sequence)
+      initial
+      (op (car sequence)
+          (accumulate op initial (cdr sequence)))))
+
+(define (map p sequence)
+  (accumulate (lambda (x y) (cons (p x) y)) '() sequence))
+
+(map (lambda (x) (* x x)) '(1 2 3 4))
+;; ex 2.34
+
+(define (horner-eval x coefficient-sequence)
+  (accumulate (lambda (this-coeff higher-terms)
+                (+ this-coeff (* x higher-terms)))
+              0
+              coefficient-sequence))
+
+(horner-eval 2 (list 1 3 0 5 0 1))
+
+;; ex 2.35
+
+(define (count-leaves t)
+  (accumulate (lambda (item count)
+                (+ count 1))
+              0
+              (fringe t)))
+
+(count-leaves '(1 2 (3 (4 5)) (7 8) (10 20)))
+
+
+;; ex 2.36
+
+(define nil '())
+
+(define (accumulate-n op init seqs)
+  (if (null? (car seqs))
+      nil
+      (cons (accumulate op init (map car seqs))
+            (accumulate-n op init (map cdr seqs)))))
+
+(accumulate-n + 0 '((1 2 3) (4 5 6) (7 8 9)))
+
+;; ex 2.37
+
+(define (dot-product v w)
+  (accumulate + 0 (map * v w)))
+
+(define (matrix-*-vector m v)
+  (map (lambda (v1) (dot-product v1 v)) m))
+
+(define (transpose mat)
+  (accumulate-n (lambda (this-item acc)
+                  (cons this-item acc)) nil mat))
+
+(define (matrix-*-matrix m n)
+  (let ((cols (transpose n)))
+    (map (lambda (row)
+           (matrix-*-vector cols row)) m)))
+
+(dot-product '(1 2 3) '(4 5 6))
+
+(matrix-*-vector '((1 2 3) (4 5 6)) '(1 1 1))
+(transpose '((1 2 3) (4 5 6)))
+
+(matrix-*-matrix '((1 2 3) (4 5 6)) '((7 10 13) (8 11 14) (9 12 15)))
+
+
+;; ex 2.38
+
+(define (fold-left op initial sequence)
+  (define (iter result rest)
+    (if (null? rest)
+        result
+        (iter (op result (car rest))
+              (cdr rest))))
+  (iter initial sequence))
+
+(define fold-right accumulate)
+
+(fold-right / 1 (list 1 2 3))           ; 2/3
+(fold-left / 1 (list 1 2 3))            ; 1/6
+
+(fold-right list nil (list 1 2 3))
+(fold-left list nil (list 1 2 3))
+
+;; ex 2.39
+(define (reverse sequence)
+  (fold-right (lambda (item acc)
+                (append acc (list item))) nil sequence))
+
+(reverse '(1 2 3 4))
+
+(define (reverse sequence)
+  (fold-left (lambda (item acc)
+               (cons acc item)) nil sequence))
+
+
+
+
+;; ex 2.40
+
+(define (flatmap proc seq)
+  (accumulate append nil (map proc seq)))
+
+(define (enumerate-interval a b)
+  (if (> a b)
+      nil
+      (cons a (enumerate-interval (+ a 1) b))))
+
+(define (unique-pairs n)
+  (flatmap (lambda (i)
+             (map (lambda (j) (list i j))
+                  (enumerate-interval 1 (- i 1))))
+           (enumerate-interval 1 n)))
+
+(unique-pairs 10)
+
+(map (lambda (j) (list 10 j)) (enumerate-interval 2 10))
+
+;; ex 2.41
+
+(define (filter predicate sequence)
+  (cond ((null? sequence) nil)
+        ((predicate (car sequence))
+         (cons (car sequence)
+               (filter predicate (cdr sequence))))
+        (else (filter predicate (cdr sequence)))))
+
+(define (test n s)
+  (define (insert-a-dimension n result)
+    (flatmap
+     (lambda (i)
+       (map (lambda (r)
+              (cons i r)) result))
+     (enumerate-interval 1 n)))
+  (let ((d1 (insert-a-dimension n '(()))))
+    (let ((d2 (insert-a-dimension n d1)))
+      (let ((d3 (insert-a-dimension n d2)))
+        (filter
+         (lambda (pair)
+           (let ((i (car pair))
+                 (j (cadr pair))
+                 (k (caddr pair)))
+             (and
+              (not (or (= i j) (= i k) (= j k)))
+              (= (+ i j k) s))))
+         d3)))))
+
+(test 5 10)
+
+;; ex 2.42
+
+
