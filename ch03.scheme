@@ -1,0 +1,58 @@
+;;; ex 3.1
+(define (make-accumulator initial)
+  (lambda (acc)
+    (begin
+      (set! initial (+ initial acc))
+      initial)))
+
+(define acc (make-accumulator 10))
+
+(acc 20)
+
+;;; ex 3.2
+
+(define (make-monitored func)
+  (let ((count 0))
+    (lambda (arg)
+      (cond
+       ((eq? arg 'how-many-calls) count)
+       ((eq? arg 'reset-count) (set! count 0))
+       (else (set! count (+ count 1)) (func arg))))))
+
+(define s (make-monitored sqrt))
+
+(s 100)
+
+(s 'how-many-calls)
+(s 'reset-count)
+
+;;; ex 3.3 and ex 3.4
+(define (make-account balance passwd)
+  (define (withdraw amount)
+    (if (>= balance amount)
+        (begin (set! balance (- balance amount))
+               balance)
+        "Insufficient funds"))
+  (define (deposit amount)
+    (set! balance (+ balance amount))
+    balance)
+  (define (dispatch-method method)
+    (cond ((eq? method 'withdraw) withdraw)
+          ((eq? method 'deposit) deposit)
+          (else (error "Unknown request -- MAKE-ACCOUNT" method))))
+  (let ((fail_count 0))
+    (lambda (pass method)
+      (cond ((eq? pass passwd)
+             (set! fail_count 0)
+             (dispatch-method method))
+            (else
+             (set! fail_count (+ fail_count 1))
+             (if
+              (= fail_count 7)
+              (call-the-cops)
+              "Incorrect password"))))))
+
+(define acc (make-account 10 'password))
+
+((acc 'password 'deposit) 20)
+
