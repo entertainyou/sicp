@@ -154,7 +154,7 @@
 
 (define (make-center-percent center percent)
   (make-interval (* center (- 1 percent))
-                 (* center (+ 1 percent)))))
+                 (* center (+ 1 percent))))
 
 ;; ex 2.13
 
@@ -486,4 +486,194 @@
 
 ;; ex 2.42
 
+
+;; ex 2.53
+
+(list 'a 'b 'c)
+(a b c)
+
+(list (list 'george))
+((george))
+
+;; ex 2.54
+
+(define (equal? l1 l2)
+  (cond
+   ((and (null? l1) (null? l2)) #t)
+   ((or (null? l1) (null? l2)) #f)
+   (else (and (eq? (car l1) (car l2))
+              (equal? (cdr l1) (cdr l2))))))
+
+(equal? '(this is a list) '(this is a list))
+
+;; ex 2.55
+'a                                      ;equals to (quote a)
+
+;; ex 2.56
+
+
+(define (deriv exp var)
+  (cond ((number? exp) 0)
+        ((variable? exp)
+         (if (same-variable? exp var) 1 0))
+        ((sum? exp)
+         (make-sum (deriv (addend exp) var)
+                   (deriv (augend exp) var)))
+        ((product? exp)
+         (make-sum
+          (make-product (multiplier exp)
+                        (deriv (multiplicand exp) var))
+          (make-product (deriv (multiplier exp) var)
+                        (multiplicand exp))))
+        ((exponentiation? exp)
+         (make-product
+          (make-product (exponent exp)
+                        (make-exponentiation
+                         (base exp)
+                         (make-sum (exponent exp) -1)))
+          (deriv (base exp) var)))
+        (else
+         (error "unknown expression type -- DERIV" exp))))
+
+(define (variable? x) (symbol? x))
+(define (same-variable? v1 v2)
+  (and (variable? v1) (variable? v2) (eq? v1 v2)))
+
+(define (make-sum a1 a2) (list '+ a1 a2))
+
+(define (make-product m1 m2) (list '* m1 m2))
+
+(define (sum? x)
+  (and (pair? x) (eq? (car x) '+)))
+
+(define (addend s) (cadr s))
+(define (augend s) (caddr s))
+
+(define (product? x)
+  (and (pair? x) (eq? (car x) '*)))
+(define (multiplier p) (cadr p))
+(define (multiplicand p) (caddr p))
+
+(define (make-sum a1 a2)
+  (cond ((=number? a1 0) a2)
+        ((=number? a2 0) a1)
+        ((and (number? a1) (number? a2)) (+ a1 a2))
+        (else (list '+ a1 a2))))
+
+(define (=number? exp num)
+  (and (number? exp) (= exp num)))
+
+(define (make-product m1 m2)
+  (cond ((or (=number? m1 0) (=number? m2 0)) 0)
+        ((=number? m1 1) m2)
+        ((=number? m2 1) m1)
+        ((and (number? m1) (number? m2)) (* m1 m2))
+        (else (list '* m1 m2))))
+
+(define (exponentiation? x)
+  (and (pair? x) (eq? (car x) '**)))
+
+(define (base e)
+  (cadr e))
+
+(define (exponent e)
+  (caddr e))
+
+(define (make-exponentiation base exp)
+  (cond
+   ((=number? exp 0) 1)
+   ((=number? exp 1) base)
+   (else (list '** base exp))))
+
+
+(deriv '(* x 10) 'x)
+(deriv (make-exponentiation (make-product 2 'x) 'y) 'x)
+
+;; ex 2.57
+(define (make-sum-2 a1 a2)
+  (cond ((=number? a1 0) a2)
+        ((=number? a2 0) a1)
+        ((and (number? a1) (number? a2)) (+ a1 a2))
+        (else (list '+ a1 a2))))
+
+(define (make-sum-3 addend augend remain)
+  (if (null? remain)
+      (make-sum-2 addend augend)
+      (make-sum-2 addend (make-sum-3 augend (car remain) (cdr remain)))))
+
+(define (make-sum addend augend . remain)
+  (make-sum-3 addend augend remain))
+
+(define (addend s)
+  (cadr s))
+
+(define (augend s)
+  (caddr s))
+
+(make-sum 1 10 11 'b 'c 'd 'e 2 20)
+
+;; ex 2.59
+
+(define true #t)
+(define false #f)
+
+(define (element-of-set? x set)
+  (cond ((null? set) false)
+        ((equal? x (car set)) true)
+        (else (element-of-set? x (cdr set)))))
+
+(define (adjoin-set x set)
+  (if (element-of-set? x set)
+      set
+      (cons x set)))
+
+(define (union-set set1 set2)
+  (if (null? set1)
+      set2
+      (union-set (cdr set1) (adjoin-set (car set1) set2))))
+
+(union-set '(a b c d) '(f h b c))
+
+;; ex 2.60
+
+(define (element-of-set?-dup x set)
+  (cond ((null? set) false)
+        ((equal? x (car set)) true)
+        (else (element-of-set? x (cdr set))))) ;O(n) to O(n)
+
+(define (adjoin-set-dup x set)
+  (cons x set))                         ;O(1) to O(n)
+
+(define (union-set-dup set1 set2)
+  (append set1 set2)) ;O(n) to O(n*n)
+
+(define (intersection-dup set1 set2)
+  (cond ((or (null? set1) (null? set2)) '())
+        ((element-of-set?-dup (car set1) set2)
+         (cons (car set1)
+               (intersection-dup (cdr set1) set2)))
+        (else (intersection-dup (cdr set1) set2)))) ;O(n*n) to O(n*n)
+
+;; ex 2.61
+(define (adjoin-set-ordered x set)
+  (if (null? set)
+      (list x)
+      (let ((x1 (car set)))
+        (cond ((= x x1) set)
+              ((> x x1) (cons x1 (adjoin-set-ordered x (cdr set))))
+              ((< x x1) (cons x set))))))
+
+;;; ex 2.62
+(define (union-set-ordered set1 set2)
+  (cond ((null? set1) set2)
+        ((null? set2) set1)
+        (else (let ((x1 (car set1))
+                    (x2 (car set2)))
+                (cond ((= x1 x2) (cons x1 (union-set-ordered (cdr set1) (cdr set2))))
+                      ((< x1 x2) (cons x1 (union-set-ordered (cdr set1) set2)))
+                      ((> x1 x2) (cons x2 (union-set-ordered set1 (cdr set2)))))))))
+
+(union-set-ordered '(1 2 3 4) '(3 10 20 70 80))
+
+;;; ex 2.63
 
