@@ -173,5 +173,104 @@ applicative order: 4
 (search-for-primes 1001 3)
 
 (mapcar (lambda (n)
-          (search-for-primes n 3)) '(1001 10001 100001))
+          (search-for-primes n 3)) '(1001 10001 100001 1000001))
+
+;; results
+(2.471605936686198e-05 7.843971252441406e-05 0.00025208791097005207 0.0007874965667724609)
+
+;; Ex 1.23
+
+(defun next (n)
+  (if (= n 2)
+      3
+    (+ n 2)))
+
+(defun find-divisor (n test-divisor)
+  (cond ((> (* test-divisor test-divisor) n) n)
+        ((divides? test-divisor n) test-divisor)
+        (t (find-divisor n (next test-divisor)))))
+;; results
+(1.0569890340169271e-05 3.147125244140625e-05 9.870529174804688e-05 0.0003094673156738281)
+
+
+;; Ex 1.24
+
+(defun even? (n)
+  (= (% n 2) 0))
+
+(defun remainder (a b)
+  (% a b))
+
+(defun square (n)
+  (* n n))
+
+(defun expmod (base exp m)
+  (cond ((= exp 0) 1)
+        ((even? exp)
+         (remainder (square (expmod base (/ exp 2) m))
+                    m))
+        (t
+         (remainder (* base (expmod base (- exp 1) m))
+                    m))))
+
+(defun fermat-test (n)
+  (defun try-it (a)
+    (= (expmod a n n) a))
+  (try-it (+ 1 (random (- n 1)))))
+
+(defun fast-prime? (n times)
+  (cond ((= times 0) t)
+        ((fermat-test n) (fast-prime? n (- times 1)))
+        (t nil)))
+
+(defun fast-prime-time-helper (n times time)
+  (if (fast-prime? n times)
+      (- (runtime) time)))
+
+(defun fast-prime-time (n times)
+  (fast-prime-time-helper n times (runtime)))
+
+(fast-prime? 24 10)
+
+(defun search-for-primes (n count)
+  (defun search-for-primes-iter (n count iter acc)
+    (if (= iter count) (/ acc count)
+      (progn
+        (let ((result (fast-prime-time n 20)))
+          (if result
+              (search-for-primes-iter (+ n 2) count (+ iter 1) (+ acc result))
+            (search-for-primes-iter (+ n 2) count iter acc))))))
+  (search-for-primes-iter n count 0 0))
+
+(mapcar (lambda (n)
+          (search-for-primes n 3)) '(1001 10001 100001 1000001))
+
+; f(1000 ^ 2) ~= 2 * f(1000)
+
+;; Ex 1.25
+
+;; base^exp grow rapidly
+
+;; Ex 1.26
+
+;; fast-prime? is now O(n).
+
+;; Ex 1.27
+;; Carmichael numbers 561, 1105, 1729, 2465, 2821, and 6601
+
+(defun test-n (n)
+  (defun test-n-iter (n i)
+    (cond
+     ((= i n) t)
+     ((= (expmod i n n) i) (test-n-iter n (+ i 1)))
+     (t nil)))
+  (test-n-iter n 1))
+
+(mapcar 'test-n '(561 1105 1729 2465 2821 6601))
+
+(defun foo (n)
+  (+ n 1))
+
+(defun bar (foo)
+  (foo 10))
 
